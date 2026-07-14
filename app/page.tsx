@@ -17,32 +17,45 @@ const SAMPLES: { label: string; text: string }[] = [
   {
     label: "Targeted abuse",
     text: "People like you don't deserve to be on this platform. Go crawl back to whatever hole you came from."
+  },
+  {
+    label: "عربي — حالة حدّية",
+    text: "والله لو أشوفك قدامي كان وريتك، بس أكيد بتنجلد وتختفي مثل كل مرة 😂"
   }
 ];
 
-const VERDICT_STYLE: Record<
-  string,
-  { text: string; ring: string; label: string }
-> = {
-  FLAG: { text: "text-flag", ring: "border-flag", label: "FLAGGED" },
-  ALLOW: { text: "text-allow", ring: "border-allow", label: "APPROVED" },
-  ESCALATE: {
-    text: "text-escalate",
-    ring: "border-escalate",
-    label: "ESCALATE"
-  }
+const VERDICT_STYLE: Record<string, { cls: string; label: string }> = {
+  FLAG: { cls: "border-flag text-flag", label: "FLAG" },
+  ALLOW: { cls: "border-allow text-allow", label: "ALLOW" },
+  ESCALATE: { cls: "border-escalate text-escalate", label: "ESCALATE" }
 };
 
 function ConfidenceBar({ value, vote }: { value: number; vote?: string }) {
   const color =
-    vote === "FLAG" ? "bg-flag" : vote === "ALLOW" ? "bg-allow" : "bg-signal";
+    vote === "FLAG" ? "bg-flag" : vote === "ALLOW" ? "bg-allow" : "bg-accent";
   return (
-    <div className="h-1 w-full rounded-full bg-line/60 overflow-hidden">
+    <div className="h-1.5 w-full rounded-full bg-line overflow-hidden">
       <div
-        className={`h-full ${color} transition-all duration-700`}
+        className={`h-full rounded-full ${color} transition-all duration-700`}
         style={{ width: `${Math.round(value * 100)}%` }}
       />
     </div>
+  );
+}
+
+function VoteBadge({ vote }: { vote: string }) {
+  const style =
+    vote === "FLAG"
+      ? "bg-flag/10 text-flag"
+      : vote === "ALLOW"
+      ? "bg-allow/10 text-allow"
+      : "bg-escalate/10 text-escalate";
+  return (
+    <span
+      className={`rounded-full px-2.5 py-0.5 font-mono text-[11px] font-semibold tracking-wider ${style}`}
+    >
+      {vote}
+    </span>
   );
 }
 
@@ -57,48 +70,38 @@ function JudgeCard({
   state: "idle" | "thinking" | "revealed";
   result?: JudgeResult;
 }) {
+  const verdictBorder =
+    state === "revealed" && result?.ok
+      ? result.vote === "FLAG"
+        ? "border-flag/50"
+        : "border-allow/50"
+      : "border-line";
   return (
     <div
-      className={`relative rounded-lg border bg-panel p-4 transition-colors duration-500 ${
-        state === "revealed" && result?.ok
-          ? result.vote === "FLAG"
-            ? "border-flag/50"
-            : "border-allow/50"
-          : "border-line"
-      }`}
+      className={`rounded-xl border bg-card p-4 shadow-card transition-colors duration-500 ${verdictBorder}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="font-mono text-[11px] tracking-widest text-muted">
+        <span className="font-mono text-[11px] tracking-[0.2em] text-muted">
           JUDGE {String(index + 1).padStart(2, "0")}
         </span>
         {state === "thinking" && (
-          <span className="lane-pulse font-mono text-[11px] text-signal">
+          <span className="lane-pulse font-mono text-[11px] font-medium text-accent">
             deliberating…
           </span>
         )}
-        {state === "revealed" && result?.ok && (
-          <span
-            className={`font-mono text-xs font-semibold ${
-              result.vote === "FLAG" ? "text-flag" : "text-allow"
-            }`}
-          >
-            {result.vote}
-          </span>
-        )}
+        {state === "revealed" && result?.ok && <VoteBadge vote={result.vote!} />}
         {state === "revealed" && result && !result.ok && (
-          <span className="font-mono text-xs text-escalate">FAILED</span>
+          <VoteBadge vote="FAILED" />
         )}
       </div>
 
-      <p className="mt-1 font-display text-sm font-medium break-all">
-        {model}
-      </p>
+      <p className="mt-1.5 font-mono text-sm font-medium break-all">{model}</p>
 
       {state === "revealed" && result?.ok && (
         <div className="rise-in mt-3 space-y-2">
           <div className="flex items-center justify-between font-mono text-[11px] text-muted">
             <span>
-              confidence {(result.confidence ?? 0).toFixed(2)}
+              conf {(result.confidence ?? 0).toFixed(2)}
               {result.category && result.category !== "none"
                 ? ` · ${result.category}`
                 : ""}
@@ -106,12 +109,14 @@ function JudgeCard({
             <span>{result.latencyMs} ms</span>
           </div>
           <ConfidenceBar value={result.confidence ?? 0} vote={result.vote} />
-          <p className="text-xs leading-relaxed text-muted">{result.reason}</p>
+          <p dir="auto" className="text-xs leading-relaxed text-muted">
+            {result.reason}
+          </p>
         </div>
       )}
 
       {state === "revealed" && result && !result.ok && (
-        <p className="rise-in mt-3 text-xs text-escalate/90 break-all">
+        <p className="rise-in mt-3 text-xs text-escalate break-all">
           {result.error}
         </p>
       )}
@@ -123,7 +128,7 @@ export default function Home() {
   const [content, setContent] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [data, setData] = useState<ModerationResponse | null>(null);
-  const [revealed, setRevealed] = useState(0); // how many judge cards revealed
+  const [revealed, setRevealed] = useState(0);
   const [showVerdict, setShowVerdict] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -160,11 +165,8 @@ export default function Home() {
       const resp = json as ModerationResponse;
       setData(resp);
 
-      // staggered reveal: judge 1 → 2 → 3 → verdict stamp
       resp.judges.forEach((_, i) => {
-        timers.current.push(
-          setTimeout(() => setRevealed(i + 1), 250 + i * 450)
-        );
+        timers.current.push(setTimeout(() => setRevealed(i + 1), 250 + i * 450));
       });
       timers.current.push(
         setTimeout(() => {
@@ -182,24 +184,39 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-10 md:py-14">
-      {/* ── Header ─────────────────────────────────────────────── */}
-      
-<header className="mb-14">
-  <p className="font-mono text-[11px] tracking-[0.4em] text-[#8B6A4A]">DIGITAL COURT • CONSENSUS ENGINE</p>
-  <h1 className="mt-3 font-display text-5xl font-bold text-[#E8DFC8]">Tribunal AI</h1>
-  <p className="mt-5 max-w-3xl leading-8 text-[#B8AA99]">
-    Three independent AI judges deliberate every case before a consensus engine issues a trusted verdict.
-  </p>
-</header>
+      {/* ── Top rule ───────────────────────────────────────────── */}
+      <div className="mb-8 flex items-center justify-between border-b border-line pb-3">
+        <span className="font-mono text-[11px] tracking-[0.25em] text-muted">
+          TRUST &amp; SAFETY CONSOLE
+        </span>
+        <span className="font-mono text-[11px] tracking-[0.25em] text-muted">
+          FAN-OUT → AGGREGATE
+        </span>
+      </div>
 
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <header className="mb-10">
+        <p className="font-mono text-xs font-semibold tracking-[0.25em] text-accent">
+          PARALLELIZATION · VOTING
+        </p>
+        <h1 className="mt-2 font-display text-4xl font-bold tracking-tight md:text-5xl">
+          LLM Tribunal
+        </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
+          Borderline moderation calls you can&apos;t get wrong. The same post
+          fans out to three independent LLM judges in parallel; a voter takes
+          the majority verdict. A confidence-threshold guardrail escalates
+          split, low-confidence calls to human review.
+        </p>
+      </header>
 
       {/* ── Input dock ─────────────────────────────────────────── */}
-      <section className="rounded-lg border border-line bg-panel2 p-4">
+      <section className="rounded-xl border border-line bg-card p-5 shadow-card">
         <label
           htmlFor="post"
-          className="font-mono text-[11px] tracking-widest text-muted"
+          className="font-mono text-[11px] tracking-[0.2em] text-muted"
         >
-          CASE FILE
+          POST UNDER REVIEW
         </label>
         <textarea
           id="post"
@@ -208,30 +225,32 @@ export default function Home() {
           onChange={(e) => setContent(e.target.value)}
           rows={4}
           maxLength={4000}
-          placeholder="Submit evidence, testimony, or online content for judicial review..."
-          className="mt-2 w-full resize-y rounded-md border border-line bg-ink p-3 text-sm leading-relaxed outline-none placeholder:text-muted/60 focus:border-signal"
+          placeholder="Paste the post to moderate — Arabic or English…"
+          className="mt-2 w-full resize-y rounded-lg border border-line bg-paper p-3 text-sm leading-relaxed outline-none transition placeholder:text-muted/60 focus:border-accent focus:bg-card"
         />
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <button
             onClick={run}
             disabled={!content.trim() || phase === "deliberating"}
-            className="rounded-md bg-signal px-5 py-2 font-display text-sm font-semibold text-ink transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-lg bg-ink px-5 py-2.5 font-display text-sm font-semibold text-white transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-35"
           >
-            {phase === "deliberating" ? "Court in Session..." : "Begin Deliberation"}
+            {phase === "deliberating"
+              ? "Convening judges…"
+              : "Convene the tribunal"}
           </button>
-          <span className="font-mono text-[11px] text-muted">samples:</span>
+          <span className="ml-1 font-mono text-[11px] text-muted">samples:</span>
           {SAMPLES.map((s) => (
             <button
               key={s.label}
               onClick={() => setContent(s.text)}
-              className="rounded-full border border-line px-3 py-1 font-mono text-[11px] text-muted transition hover:border-signal hover:text-signal"
+              className="rounded-full border border-line bg-card px-3 py-1 text-xs text-muted transition hover:border-accent hover:text-accent"
             >
               {s.label}
             </button>
           ))}
         </div>
         {phase === "error" && (
-          <p className="mt-3 rounded-md border border-flag/40 bg-flag/10 p-3 text-xs text-flag">
+          <p className="mt-3 rounded-lg border border-flag/30 bg-flag/5 p-3 text-xs text-flag">
             {errorMsg}
           </p>
         )}
@@ -240,8 +259,8 @@ export default function Home() {
       {/* ── Pipeline ───────────────────────────────────────────── */}
       <section className="mt-10">
         <div className="mb-4 flex items-center gap-3">
-          <span className="font-mono text-[11px] tracking-widest text-muted">
-            COURT PROCEEDINGS
+          <span className="font-mono text-[11px] tracking-[0.2em] text-muted">
+            PIPELINE
           </span>
           <span className="h-px flex-1 bg-line" />
           {data && (
@@ -251,7 +270,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* fan-out lanes */}
         <div className="grid gap-4 md:grid-cols-3">
           {judgeModels.map((m, i) => (
             <JudgeCard
@@ -273,15 +291,15 @@ export default function Home() {
         </div>
 
         {/* voter / verdict */}
-        <div className="mt-6 rounded-lg border border-line bg-panel p-5 md:p-6">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div className="min-w-0">
-              <p className="font-mono text-[11px] tracking-widest text-muted">
-                CONSENSUS CHAMBER
+        <div className="mt-6 rounded-xl border border-line bg-card p-5 shadow-card md:p-6">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center">
+            <div className="min-w-0 flex-1">
+              <p className="font-mono text-[11px] tracking-[0.2em] text-muted">
+                AGGREGATOR / VOTER — MAJORITY RULE
               </p>
               {data && showVerdict ? (
                 <div className="rise-in mt-2">
-                  <p className="font-mono text-sm">
+                  <p className="font-mono text-sm font-medium">
                     <span className="text-flag">FLAG {data.tally.flag}</span>
                     <span className="text-muted"> · </span>
                     <span className="text-allow">ALLOW {data.tally.allow}</span>
@@ -294,14 +312,13 @@ export default function Home() {
                       </>
                     )}
                   </p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted">
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted">
                     {data.finalReason}
                   </p>
                   {data.majorityConfidence !== null && (
                     <p className="mt-1 font-mono text-[11px] text-muted">
-                      majority confidence{" "}
-                      {data.majorityConfidence.toFixed(2)} · guardrail
-                      threshold {data.threshold}
+                      majority confidence {data.majorityConfidence.toFixed(2)} ·
+                      guardrail threshold {data.threshold}
                     </p>
                   )}
                 </div>
@@ -315,10 +332,10 @@ export default function Home() {
             </div>
 
             {/* the stamp */}
-            <div className="flex h-24 w-full items-center justify-center md:w-56">
+            <div className="flex h-24 w-full items-center justify-center border-t border-dashed border-line pt-5 md:w-60 md:border-l md:border-t-0 md:pl-6 md:pt-0">
               {data && showVerdict && verdict ? (
                 <span
-                  className={`stamp-in inline-block rounded-md border-4 px-6 py-2 font-display text-2xl font-bold tracking-widest ${verdict.ring} ${verdict.text}`}
+                  className={`stamp-in inline-block rounded-md border-4 border-double px-6 py-2 font-display text-2xl font-bold tracking-[0.15em] ${verdict.cls}`}
                 >
                   {verdict.label}
                 </span>
