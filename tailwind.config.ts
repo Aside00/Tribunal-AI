@@ -5,17 +5,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#0D1520",
-        panel: "#131F2E",
-        panel2: "#0F1926",
-        line: "#23364A",
-        fg: "#E8EDF4",
-        muted: "#8FA3B8",
-        signal: "#53C8F0",
-        flag: "#FF5D5D",
-        allow: "#43D9A3",
-        escalate: "#FFB454"
-      },
+  background: "#0B0B0B",
+  surface: "#151313",
+  panel: "#1D1918",
+
+  bronze: "#8B6A4A",
+  gold: "#C8A46A",
+  parchment: "#D6C2A1",
+
+  success: "#4D8B55",
+  danger: "#A94141",
+  warning: "#C78A2F",
+
+  border: "#3A3028",
+  text: "#EEE7DD",
+  muted: "#8E8275"
+},
       fontFamily: {
         display: ["'Space Grotesk'", "sans-serif"],
         mono: ["'IBM Plex Mono'", "monospace"],
