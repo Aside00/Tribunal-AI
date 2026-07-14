@@ -17,10 +17,6 @@ const SAMPLES: { label: string; text: string }[] = [
   {
     label: "Targeted abuse",
     text: "People like you don't deserve to be on this platform. Go crawl back to whatever hole you came from."
-  },
-  {
-    label: "عربي — حالة حدية",
-    text: "والله لو أشوفك قدامي كان وريتك، بس أكيد بتنجلد وتختفي مثل كل مرة 😂"
   }
 ];
 
@@ -28,8 +24,8 @@ const VERDICT_STYLE: Record<
   string,
   { text: string; ring: string; label: string }
 > = {
-  FLAG: { text: "text-flag", ring: "border-flag", label: "FLAG" },
-  ALLOW: { text: "text-allow", ring: "border-allow", label: "ALLOW" },
+  FLAG: { text: "text-flag", ring: "border-flag", label: "FLAGGED" },
+  ALLOW: { text: "text-allow", ring: "border-allow", label: "APPROVED" },
   ESCALATE: {
     text: "text-escalate",
     ring: "border-escalate",
@@ -187,20 +183,15 @@ export default function Home() {
   return (
     <main className="mx-auto max-w-5xl px-5 py-10 md:py-14">
       {/* ── Header ─────────────────────────────────────────────── */}
-      <header className="mb-10">
-        <p className="font-mono text-[11px] tracking-[0.25em] text-signal">
-          TRUST &amp; SAFETY · FAN-OUT → AGGREGATE
-        </p>
-        <h1 className="mt-2 font-display text-4xl font-bold md:text-5xl">
-          LLM Tribunal
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-          Borderline moderation calls you can&apos;t get wrong. The same post
-          fans out to three independent LLM judges in parallel; a voter takes
-          the majority verdict. A confidence-threshold guardrail escalates
-          split, low-confidence calls to human review.
-        </p>
-      </header>
+      
+<header className="mb-14">
+  <p className="font-mono text-[11px] tracking-[0.4em] text-[#8B6A4A]">DIGITAL COURT • CONSENSUS ENGINE</p>
+  <h1 className="mt-3 font-display text-5xl font-bold text-[#E8DFC8]">Tribunal AI</h1>
+  <p className="mt-5 max-w-3xl leading-8 text-[#B8AA99]">
+    Three independent AI judges deliberate every case before a consensus engine issues a trusted verdict.
+  </p>
+</header>
+
 
       {/* ── Input dock ─────────────────────────────────────────── */}
       <section className="rounded-lg border border-line bg-panel2 p-4">
@@ -208,7 +199,7 @@ export default function Home() {
           htmlFor="post"
           className="font-mono text-[11px] tracking-widest text-muted"
         >
-          POST UNDER REVIEW
+          CASE FILE
         </label>
         <textarea
           id="post"
@@ -217,7 +208,7 @@ export default function Home() {
           onChange={(e) => setContent(e.target.value)}
           rows={4}
           maxLength={4000}
-          placeholder="Paste the post to moderate — Arabic or English…"
+          placeholder="Submit evidence, testimony, or online content for judicial review..."
           className="mt-2 w-full resize-y rounded-md border border-line bg-ink p-3 text-sm leading-relaxed outline-none placeholder:text-muted/60 focus:border-signal"
         />
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -226,7 +217,7 @@ export default function Home() {
             disabled={!content.trim() || phase === "deliberating"}
             className="rounded-md bg-signal px-5 py-2 font-display text-sm font-semibold text-ink transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {phase === "deliberating" ? "Convening judges…" : "Convene the tribunal"}
+            {phase === "deliberating" ? "Court in Session..." : "Begin Deliberation"}
           </button>
           <span className="font-mono text-[11px] text-muted">samples:</span>
           {SAMPLES.map((s) => (
@@ -250,7 +241,7 @@ export default function Home() {
       <section className="mt-10">
         <div className="mb-4 flex items-center gap-3">
           <span className="font-mono text-[11px] tracking-widest text-muted">
-            PIPELINE
+            COURT PROCEEDINGS
           </span>
           <span className="h-px flex-1 bg-line" />
           {data && (
@@ -286,7 +277,7 @@ export default function Home() {
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
               <p className="font-mono text-[11px] tracking-widest text-muted">
-                AGGREGATOR / VOTER — MAJORITY RULE
+                CONSENSUS CHAMBER
               </p>
               {data && showVerdict ? (
                 <div className="rise-in mt-2">
