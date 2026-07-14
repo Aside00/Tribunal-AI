@@ -22,7 +22,7 @@ const config: Config = {
   muted: "#8E8275"
 },
       fontFamily: {
-        display: ["'Space Grotesk'", "sans-serif"],
+        display: ["Playfair Display", "sans-serif"],
         mono: ["'IBM Plex Mono'", "monospace"],
         body: ["'Inter'", "sans-serif"]
       }
