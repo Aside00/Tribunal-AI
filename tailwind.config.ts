@@ -5,26 +5,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-  background: "#0B0B0B",
-  surface: "#151313",
-  panel: "#1D1918",
-
-  bronze: "#8B6A4A",
-  gold: "#C8A46A",
-  parchment: "#D6C2A1",
-
-  success: "#4D8B55",
-  danger: "#A94141",
-  warning: "#C78A2F",
-
-  border: "#3A3028",
-  text: "#EEE7DD",
-  muted: "#8E8275"
-},
+        paper: "#F3F5F7",
+        card: "#FFFFFF",
+        line: "#DFE5EB",
+        ink: "#17222C",
+        muted: "#62717F",
+        accent: "#1D5BD6",
+        flag: "#D93636",
+        allow: "#0F8A5F",
+        escalate: "#B97509"
+      },
       fontFamily: {
-        display: ["Playfair Display", "sans-serif"],
-        mono: ["'IBM Plex Mono'", "monospace"],
-        body: ["'Inter'", "sans-serif"]
+        display: ["Archivo", "IBM Plex Sans Arabic", "sans-serif"],
+        body: ["IBM Plex Sans Arabic", "system-ui", "sans-serif"],
+        mono: ["IBM Plex Mono", "monospace"]
+      },
+      boxShadow: {
+        card: "0 1px 2px rgba(23,34,44,0.05), 0 4px 16px rgba(23,34,44,0.05)"
       }
     }
   },
